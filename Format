@@ -1,0 +1,58 @@
+Diary format (tag set)
+
+Paragraph (Text block) tags:
+P       - Paragraph - takes optionally the name of the author (which
+          may be the literal anonymous).
+C       - Chapter - takes all arguments of a P, date (Format:
+          dd/mm/yy) and title.
+S       - Can be used everywhere where a P can be used, but does not
+          effects the text in any way, as a paragraph does. Mainly
+          usefull for naming and reffering to with an Include.
+Quote   - A quote of what someone else wrote. More os less the same
+          as a contained P with author set... But a bit more part of
+          the containing block, since it is not an own
+          paragraph. Takes the author as arg.
+F       - Footnote - takes no args.
+Comment - Editorial comment. The first item is the comment, on the
+          rest of the items. The first item must be a paragraph.
+Paus    - Comment on why there was an interruption of the
+          writing. Implies P and Comment (on nothing).
+Expl    - Explanation of a term/word. Takes no arguments. The first item
+          should be a P containing the explanation, of the rest of
+          the items.
+
+Group tags:
+List    - Unordered list of P:s and/or C:s.
+Conversation
+        - A conversation between different authors. May only contain
+          P-tags, and all of them must have an author specified. As a
+          script for a theatre.
+
+Mode (sentense/word) tags:
+Do      - Something done by the author, like *foo* in mail/chat.
+Tag     - Something that should appear as a XML tag in the output, as
+          in <Ironic>I don't hate anything</Ironic>. Takes one
+          argument, content, the content of the open tag as a string.
+Em      - With emphasis, like _foo_ in mail/chat, italic or bold.
+Tm      - Trademarked, as in 'A Good Thing<Tm>'.
+Namify  - As in 'and other Evil'.
+
+Special tags:
+Code    - Code example - indentation, line breaks, etc. are
+          preserved.
+Link    - A link to some reference, e.g. a web-page, a book or
+          whatever. Takes one arg, ref, which is a URL to the
+          resource. Wiered protocols like book:// are allowed. Most of
+          these consists of just a bounch of foo=bar-pairs, separated
+          by coma. Note that spaces should be encoded as spaces or
+          new-line, not %20. Available protocols (To be extended if
+          bessesary):
+          book://(..*=.*,)*(..*=.*)?
+          Parameters: isbn, title, subtitle, author, copy, copyyear
+          One special URl is tag://name, whith name exchanged for a
+          name of one of the tags named with a name-arg, in the
+          document (see include for more info on this).
+I       - Include the content of some other tag (args and sub-items),
+          named as stated in the single arg r. The result is as if
+          the whole include-block had been exchanged for the named
+          block. All tags may be named using a name arg.

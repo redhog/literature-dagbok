@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="ISO8859-1"?>
+<C title="Dagbok">
+ <Include ref="Framkomsten.xml"/>
+ <Include ref="Paris.xml"/>
+ <Include ref="Aettika.xml"/>
+ <Include ref="Karlstad.xml"/>
+</C>
