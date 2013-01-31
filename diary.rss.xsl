@@ -263,7 +263,7 @@
  </xsl:template>
 
  <xsl:template match="Include" name="external-inclusion" priority="0.5">
-  <xsl:apply-templates select="document(@ref)"/>
+  <xsl:apply-templates select="document(@ref)/*/*"/>
  </xsl:template>
 
 </xsl:stylesheet>
