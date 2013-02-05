@@ -1,0 +1,1 @@
+http://markcandelora.wordpress.com/2011/03/18/date-parsing-and-formatting-in-xsl/

@@ -1,6 +1,11 @@
 <xsl:stylesheet
  version="1.0"
- xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+ xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+ xmlns:ext="http://exslt.org/common"
+ exclude-result-prefixes="ext">
+
+ <xsl:import href="escape.xsl" />
+ <xsl:import href="DateFormatting/DateFormatting.xslt" />
 
  <xsl:output method="xml" encoding="utf-8" indent="yes" />
 
@@ -11,14 +16,136 @@
     <link>http://redhog.org/__generated__/<xsl:value-of select="generate-id()"/></link>
     <language>en-us</language>
     <generator>Diary</generator>
-    <xsl:apply-templates/>
+    <description>Diary</description>
+    <xsl:apply-templates mode="root" />
    </channel>
   </rss>
  </xsl:template>
 
+ <xsl:template match="*" mode="root" priority="0">
+  <xsl:apply-templates mode="root" />
+ </xsl:template>
+
+ <xsl:template match="C" name="chapter" mode="root" priority="1">
+  <item>
+    <title>
+     <xsl:if test="@title">
+      <xsl:value-of select="@title"/>
+     </xsl:if>
+     [<xsl:value-of select="@date"/>]
+   </title>
+   <link>http://redhog.org/__generated__/<xsl:value-of select="generate-id()"/></link>
+   <description>
+    <xsl:variable name="description">
+     <xsl:call-template name="description" />
+    </xsl:variable>
+    <xsl:apply-templates mode="escape" select="ext:node-set($description)/*"/>
+   </description>
+   <xsl:if test="@date">
+    <pubDate>
+     <xsl:call-template name="FormatDate">
+      <xsl:with-param name="inputFormatString" select="'mmm/dd/yyy'" />
+      <xsl:with-param name="outputFormatString" select="'ww, dd mmm yyy'" />
+      <xsl:with-param name="dateTimeString" select="'Jan/30/2010'" />
+     </xsl:call-template> 00:00:00 GMT
+    </pubDate>
+   </xsl:if>
+   <guid>http://redhog.org/__generated__/<xsl:value-of select="generate-id()"/></guid>
+  </item>
+ </xsl:template>
+
+ <xsl:template name="description">
+  <xsl:choose>
+   <xsl:when test="@author">
+    <blockquote>
+     <xsl:element name="a">
+      <xsl:attribute name="target">footnote</xsl:attribute>
+      <xsl:attribute name="href"><xsl:value-of select="@author"/></xsl:attribute>
+      ``
+     </xsl:element>
+     <xsl:apply-templates/>
+     <xsl:element name="a">
+      <xsl:attribute name="target">footnote</xsl:attribute>
+      <xsl:attribute name="href"><xsl:value-of select="@author"/></xsl:attribute>
+      ''
+     </xsl:element>
+    </blockquote>
+   </xsl:when>
+   <xsl:otherwise>
+    <xsl:apply-templates/>
+   </xsl:otherwise>
+  </xsl:choose>
+
+  <xsl:if test="descendant::F">
+   <div class="footnotes">
+    <h1>Footnotes</h1>
+    <xsl:for-each select="descendant::F">
+     <xsl:element name="a">
+      <xsl:attribute name="name">footnote.<xsl:value-of select="generate-id()"/></xsl:attribute>
+      <div class="paragraph">
+       <xsl:apply-templates/>
+      </div>
+     </xsl:element>
+    </xsl:for-each>
+   </div>
+  </xsl:if>
+
+  <xsl:if test="descendant::*[Comment or Paus[child::node()]]">
+   <div class="comments">
+    <h1>Comments</h1>
+    <xsl:for-each select="descendant::Comment">
+     <xsl:element name="a">
+      <xsl:attribute name="name">comment.<xsl:value-of select="generate-id()"/></xsl:attribute>
+      <div class="paragraph">
+       <xsl:apply-templates select="child::P[position()=1]/node()"/>
+      </div>
+     </xsl:element>
+    </xsl:for-each>
+
+    <xsl:for-each select="descendant::Paus[child::node()]">
+     <xsl:element name="a">
+      <xsl:attribute name="name">comment.<xsl:value-of select="generate-id()"/></xsl:attribute>
+      <div class="paragraph">
+       <xsl:apply-templates/>
+      </div>
+     </xsl:element>
+    </xsl:for-each>
+   </div>
+  </xsl:if>
+
+  <xsl:if test="descendant::Expl">
+   <div class="explanations">
+    <h1>Explanations</h1>
+    <xsl:for-each select="descendant::Expl">
+     <xsl:element name="a">
+      <xsl:attribute name="name">explanation.<xsl:value-of select="generate-id()"/></xsl:attribute>
+      <div class="paragraph">
+       <h2><xsl:apply-templates select="child::node()[position()!=1]"/></h2>
+       <xsl:apply-templates select="child::P[position()=1]/node()"/>
+      </div>
+     </xsl:element>
+    </xsl:for-each>
+   </div>
+  </xsl:if>
+ </xsl:template>
+
+ <xsl:template match="C">
+  <div class="chapter">
+   <h1>
+    <xsl:if test="@title">
+     <xsl:value-of select="@title"/>
+    </xsl:if>
+    <xsl:if test="@date">
+    [<xsl:value-of select="@date"/>]
+    </xsl:if>
+   </h1>
+   <xsl:apply-templates/>
+  </div>
+ </xsl:template>
+
  <xsl:template match="P" name="paragraph" priority="0.5">
   <div class="paragraph">
-   <xsl:apply-templates/>
+   <xsl:apply-templates />
   </div>
  </xsl:template>
 
@@ -54,103 +181,6 @@
     </Blockquote>
    </xsl:otherwise>
   </xsl:choose>
- </xsl:template>
-
- <xsl:template match="C[C]" priority="0.6">
-  <xsl:apply-templates/>
- </xsl:template>
-
- <xsl:template match="C" name="chapter" priority="0.5">
-  <item>
-    <title>
-     <xsl:if test="@title">
-      <xsl:value-of select="@title"/>
-     </xsl:if>
-     <xsl:if test="@date">
-      [<xsl:value-of select="@date"/>]
-     </xsl:if>
-   </title>
-   <link>http://redhog.org/__generated__/<xsl:value-of select="generate-id()"/></link>
-   <description>
-    <xsl:choose>
-     <xsl:when test="@author">
-      <Blockquote>
-       <xsl:element name="A">
-        <xsl:attribute name="Target">footnote</xsl:attribute>
-        <xsl:attribute name="Href"><xsl:value-of select="@author"/></xsl:attribute>
-        ``
-       </xsl:element>
-       <xsl:apply-templates/>
-       <xsl:element name="A">
-        <xsl:attribute name="Target">footnote</xsl:attribute>
-        <xsl:attribute name="Href"><xsl:value-of select="@author"/></xsl:attribute>
-        ''
-       </xsl:element>
-      </Blockquote>
-     </xsl:when>
-     <xsl:otherwise>
-      <xsl:apply-templates/>
-     </xsl:otherwise>
-    </xsl:choose>
-
-    <xsl:if test="descendant::F">
-     <div class="footnotes">
-      <h1>Footnotes</h1>
-      <xsl:for-each select="descendant::F">
-       <xsl:element name="a">
-        <xsl:attribute name="name">footnote.<xsl:value-of select="generate-id()"/></xsl:attribute>
-        <div class="paragraph">
-         <xsl:apply-templates/>
-        </div>
-       </xsl:element>
-      </xsl:for-each>
-     </div>
-    </xsl:if>
-
-    <xsl:if test="descendant::*[Comment or Paus[child::node()]]">
-     <div class="comments">
-      <h1>Comments</h1>
-      <xsl:for-each select="descendant::Comment">
-       <xsl:element name="a">
-        <xsl:attribute name="name">comment.<xsl:value-of select="generate-id()"/></xsl:attribute>
-        <div class="paragraph">
-         <xsl:apply-templates select="child::P[position()=1]/node()"/>
-        </div>
-       </xsl:element>
-      </xsl:for-each>
-
-      <xsl:for-each select="descendant::Paus[child::node()]">
-       <xsl:element name="a">
-        <xsl:attribute name="name">comment.<xsl:value-of select="generate-id()"/></xsl:attribute>
-        <div class="paragraph">
-         <xsl:apply-templates/>
-        </div>
-       </xsl:element>
-      </xsl:for-each>
-     </div>
-    </xsl:if>
-
-    <xsl:if test="descendant::Expl">
-     <div class="explanations">
-      <h1>Explanations</h1>
-      <xsl:for-each select="descendant::Expl">
-       <xsl:element name="a">
-        <xsl:attribute name="name">explanation.<xsl:value-of select="generate-id()"/></xsl:attribute>
-        <div class="paragraph">
-         <h2><xsl:apply-templates select="child::node()[position()!=1]"/></h2>
-         <xsl:apply-templates select="child::P[position()=1]/node()"/>
-        </div>
-       </xsl:element>
-      </xsl:for-each>
-     </div>
-    </xsl:if>
-
-   </description>
-   <xsl:if test="@date">
-    <pubDate><xsl:value-of select="@date"/></pubDate>
-   </xsl:if>
-   <guid>http://redhog.org/__generated__/<xsl:value-of select="generate-id()"/></guid>
-  </item>
  </xsl:template>
 
  <xsl:template match="F" name="footnote" priority="0.5">
@@ -264,6 +294,10 @@
 
  <xsl:template match="Include" name="external-inclusion" priority="0.5">
   <xsl:apply-templates select="document(@ref)/*/*"/>
+ </xsl:template>
+
+ <xsl:template match="Include" mode="root">
+  <xsl:apply-templates select="document(@ref)/*/*" mode="root" />
  </xsl:template>
 
 </xsl:stylesheet>
