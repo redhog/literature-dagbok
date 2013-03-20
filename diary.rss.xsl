@@ -50,6 +50,7 @@
      </xsl:call-template> 00:00:00 GMT
     </pubDate>
    </xsl:if>
+   <category><xsl:value-of select="ancestor::C[@title]/@title" separator=", " /></category>
    <guid>http://redhog.org/__generated__/<xsl:value-of select="generate-id()"/></guid>
   </item>
  </xsl:template>
